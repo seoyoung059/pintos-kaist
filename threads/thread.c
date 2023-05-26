@@ -636,20 +636,11 @@ void thread_wakeup(int64_t ticks){
 	// struct thread* thread_first = list_entry(list_begin(&sleep_list),struct thread, elem);
 	// enum intr_level old_level;
 	// old_level = intr_disable ();	// interrupt disable
-	// // printf("\n\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n\n");
 	// while(ticks >= thread_first->wakeup_tick&&!list_empty(&sleep_list)){
-	// 	printf("\n\n@@@@@\t%d\t%d\t@@@@@@@@@\n",ticks, thread_first->wakeup_tick);
 	// // wakeup할 thread에 대해
-	// 	debug_backtrace();
-	// // printf("\n\n############################\n\n");
-	// 		printf("\n\n@@@@@\t%p\t@@@@\n\n",list_begin(&sleep_list));
+	// 	// debug_backtrace();
 	// 		list_pop_front(&sleep_list);
-	// 		printf("\n\n@@@@@\t%p\t@@@@\n\n",list_begin(&sleep_list));
-	// 		// list_remove(&(thread_first->elem));// sleep_list에서 제거
-	// 		printf("\n\n@@@@@###\t%p\t###@@@@\n\n",&(list_end(&ready_list))->prev);
 	// 		list_push_back(&ready_list, &(thread_first->elem));
-	// 		printf("\n\n@@@@@###\t%p\t###@@@@\n\n",&(list_end(&ready_list))->prev);
-	// 		// thread_first->status = THREAD_READY;// thread state를 ready로 변경
 	// 		thread_first = list_entry(list_begin(&sleep_list),struct thread, elem);
 	// }
 	// intr_set_level (old_level);// interrupt enable
