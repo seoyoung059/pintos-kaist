@@ -113,7 +113,7 @@ thread_init (void) {
 	list_init (&ready_list);
 	list_init (&sleep_list);
 	list_init (&destruction_req);
-	min_wakeup_tick = 0xFFFFFFFFFFFFFFFF;
+	min_wakeup_tick = INT64_MAX;
 
 	/* Set up a thread structure for the running thread. */
 	initial_thread = running_thread ();
@@ -614,11 +614,12 @@ void thread_sleep(int64_t ticks){
 	if (current_thread!=idle_thread){
 		enum intr_level old_level;
 		old_level = intr_disable ();	// interrupt disable
-		list_remove(&(current_thread->elem));// ready list에서 삭제
+		current_thread->wakeup_tick = ticks;
+		// list_remove(&(current_thread->elem));// ready list에서 삭제
 		// current_thread->status=THREAD_BLOCKED;	//쓰레드 상태 변경
 		// thread_block();
 		// thread_current ()->status = THREAD_BLOCKED;
-		current_thread->wakeup_tick = ticks;		// wakeup될 local tick 값 저장
+		// current_thread->wakeup_tick = ticks;		// wakeup될 local tick 값 저장
 		// thread_save_mintick(current_thread->wakeup_tick);//global tick update
 		list_insert_ordered(&sleep_list, &(current_thread->elem),less_wakeuptick,NULL);// sleep list에 삽입
 		
@@ -632,18 +633,35 @@ void thread_sleep(int64_t ticks){
 
 void thread_wakeup(int64_t ticks){
 	// sleep_list에서 wakeup할 thread 검색
-	struct thread* thread_first = list_entry(list_begin(&sleep_list),struct thread, elem);
-	enum intr_level old_level;
-	old_level = intr_disable ();	// interrupt disable
-	while(ticks >= thread_first->wakeup_tick){
-	// wakeup할 thread에 대해
-			list_remove(thread_first);// sleep_list에서 제거
-			thread_first->status = THREAD_READY;// thread state를 ready로 변경
-			list_insert_ordered(&ready_list,thread_first, less_wakeuptick,NULL);// ready_list에 삽입
-			thread_first = list_entry(list_begin(&sleep_list),struct thread, elem);
+	// struct thread* thread_first = list_entry(list_begin(&sleep_list),struct thread, elem);
+	// enum intr_level old_level;
+	// old_level = intr_disable ();	// interrupt disable
+	// // printf("\n\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n\n");
+	// while(ticks >= thread_first->wakeup_tick&&!list_empty(&sleep_list)){
+	// 	printf("\n\n@@@@@\t%d\t%d\t@@@@@@@@@\n",ticks, thread_first->wakeup_tick);
+	// // wakeup할 thread에 대해
+	// 	debug_backtrace();
+	// // printf("\n\n############################\n\n");
+	// 		printf("\n\n@@@@@\t%p\t@@@@\n\n",list_begin(&sleep_list));
+	// 		list_pop_front(&sleep_list);
+	// 		printf("\n\n@@@@@\t%p\t@@@@\n\n",list_begin(&sleep_list));
+	// 		// list_remove(&(thread_first->elem));// sleep_list에서 제거
+	// 		printf("\n\n@@@@@###\t%p\t###@@@@\n\n",&(list_end(&ready_list))->prev);
+	// 		list_push_back(&ready_list, &(thread_first->elem));
+	// 		printf("\n\n@@@@@###\t%p\t###@@@@\n\n",&(list_end(&ready_list))->prev);
+	// 		// thread_first->status = THREAD_READY;// thread state를 ready로 변경
+	// 		thread_first = list_entry(list_begin(&sleep_list),struct thread, elem);
+	// }
+	// intr_set_level (old_level);// interrupt enable
+
+	struct list_elem *last;
+
+	for (last = list_begin(&sleep_list); last != list_end(&sleep_list); last = list_next(last)) {
+		if (ticks < list_entry(last, struct thread, elem)->wakeup_tick)
+			break;
 	}
-	thread_save_mintick();
-	intr_set_level (old_level);// interrupt enable
+
+	list_splice(list_end(&ready_list), list_begin(&sleep_list), last);
 }
 
 void thread_save_mintick(){

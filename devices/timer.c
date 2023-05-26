@@ -140,10 +140,10 @@ timer_interrupt (struct intr_frame *args UNUSED) {
 	*/
 	// global tick인 min_tick이 현재 시간보다 작거나 같으면 깨울 thread 존재
 	
-	if (ticks >= thread_get_mintick()){
+	// if (ticks >= thread_get_mintick()){
 		thread_wakeup(ticks);
 		thread_save_mintick();
-	}
+	// }
 }
 
 /* Returns true if LOOPS iterations waits for more than one timer
