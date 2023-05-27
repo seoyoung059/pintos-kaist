@@ -1,0 +1,6 @@
+activate
+install.sh
+tests/make-grade
+utils/backtrace
+utils/pintos
+utils/pintos-mkdisk
