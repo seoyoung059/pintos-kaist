@@ -151,4 +151,5 @@ void thread_wakeup(int64_t ticks);
 void thread_save_mintick();
 int64_t thread_get_mintick();
 bool less_priority(const struct list_elem *a, const struct list_elem *b, void *aux);
+
 #endif /* threads/thread.h */

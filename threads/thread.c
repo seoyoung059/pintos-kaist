@@ -216,9 +216,11 @@ thread_create (const char *name, int priority,
 	/* Compare the priorities of the currently running thread and the newly
 	inserted one. Yield the CPU if the newly arriving thread has higer priority*/
 	/////////////////////////////////////////////////
+
 	if (thread_current()->priority < t->priority){
 		thread_yield();
 	}
+
 	/////////////////////////////////////////////////
 	return tid;
 }
