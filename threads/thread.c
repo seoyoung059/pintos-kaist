@@ -65,6 +65,7 @@ static void do_schedule(int status);
 static void schedule (void);
 static tid_t allocate_tid (void);
 bool less_wakeuptick(const struct list_elem *a, const struct list_elem *b, void *aux);
+bool less_priority(const struct list_elem *a, const struct list_elem *b, void *aux);
 
 /* Returns true if T appears to point to a valid thread. */
 #define is_thread(t) ((t) != NULL && (t)->magic == THREAD_MAGIC)
@@ -250,10 +251,11 @@ thread_unblock (struct thread *t) {
 
 	old_level = intr_disable ();
 	ASSERT (t->status == THREAD_BLOCKED);
-	list_push_back (&ready_list, &t->elem);
+	// list_push_back (&ready_list, &t->elem);
+
 
 	/////////////////////////////////////////////////
-	// list_insert_ordered(&ready_list, &t->elem,, NULL);
+	list_insert_ordered(&ready_list, &t->elem,less_priority, NULL);
 	/////////////////////////////////////////////////
 	t->status = THREAD_READY;
 	intr_set_level (old_level);
@@ -615,36 +617,15 @@ void thread_sleep(int64_t ticks){
 		enum intr_level old_level;
 		old_level = intr_disable ();	// interrupt disable
 		current_thread->wakeup_tick = ticks;
-		// list_remove(&(current_thread->elem));// ready list에서 삭제
-		// current_thread->status=THREAD_BLOCKED;	//쓰레드 상태 변경
-		// thread_block();
-		// thread_current ()->status = THREAD_BLOCKED;
-		// current_thread->wakeup_tick = ticks;		// wakeup될 local tick 값 저장
-		// thread_save_mintick(current_thread->wakeup_tick);//global tick update
 		list_insert_ordered(&sleep_list, &(current_thread->elem),less_wakeuptick,NULL);// sleep list에 삽입
 		
 		thread_save_mintick();
 		thread_block();
 		intr_set_level (old_level);
 	}
-	// schedule();
-	/* When you manipulate thread list, disable interrupt!*/
 }   
 
 void thread_wakeup(int64_t ticks){
-	// sleep_list에서 wakeup할 thread 검색
-	// struct thread* thread_first = list_entry(list_begin(&sleep_list),struct thread, elem);
-	// enum intr_level old_level;
-	// old_level = intr_disable ();	// interrupt disable
-	// while(ticks >= thread_first->wakeup_tick&&!list_empty(&sleep_list)){
-	// // wakeup할 thread에 대해
-	// 	// debug_backtrace();
-	// 		list_pop_front(&sleep_list);
-	// 		list_push_back(&ready_list, &(thread_first->elem));
-	// 		thread_first = list_entry(list_begin(&sleep_list),struct thread, elem);
-	// }
-	// intr_set_level (old_level);// interrupt enable
-
 	struct list_elem *last;
 
 	for (last = list_begin(&sleep_list); last != list_end(&sleep_list); last = list_next(last)) {
@@ -653,11 +634,10 @@ void thread_wakeup(int64_t ticks){
 	}
 
 	list_splice(list_end(&ready_list), list_begin(&sleep_list), last);
+	list_sort(&ready_list, less_priority, NULL);
 }
 
 void thread_save_mintick(){
-	// if(wakeup_tick < min_wakeup_tick)
-	// 	min_wakeup_tick = wakeup_tick;
 	struct thread* thread_first = list_entry(list_begin(&sleep_list),struct thread, elem);
 	min_wakeup_tick = thread_first->wakeup_tick;
 	return;
@@ -673,4 +653,10 @@ bool less_wakeuptick(const struct list_elem *a, const struct list_elem *b, void 
 	struct thread* thread_a = list_entry(a,struct thread, elem);
 	struct thread* thread_b = list_entry(b,struct thread, elem);
 	return (int64_t)(thread_a->wakeup_tick)	< (int64_t)(thread_b->wakeup_tick);
+}
+
+bool less_priority(const struct list_elem *a, const struct list_elem *b, void *aux){
+	struct thread* thread_a = list_entry(a,struct thread, elem);
+	struct thread* thread_b = list_entry(b,struct thread, elem);
+	return (int)(thread_a->priority)	> (int)(thread_b->priority);
 }
