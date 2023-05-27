@@ -114,7 +114,7 @@ sema_up (struct semaphore *sema) {
 		thread_unblock (list_entry (list_pop_front (&sema->waiters),
 					struct thread, elem));
 	sema->value++;
-	list_sort(&sema->waiters,less_priority,NULL);
+	// list_sort(&sema->waiters,less_priority,NULL);
 	intr_set_level (old_level);
 }
 
@@ -308,7 +308,7 @@ cond_signal (struct condition *cond, struct lock *lock UNUSED) {
 	if (!list_empty (&cond->waiters))
 		sema_up (&list_entry (list_pop_front (&cond->waiters),
 					struct semaphore_elem, elem)->semaphore);
-	list_sort(&cond->waiters,less_priority,NULL);
+	// list_sort(&cond->waiters,less_priority,NULL);
 }
 
 /* Wakes up all threads, if any, waiting on COND (protected by
